@@ -23,6 +23,7 @@
 #include "clang/Tooling/Execution.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
 #include <utility>
 
@@ -176,6 +177,15 @@ int main(int argc, const char **argv) {
   // Emit collected data.
   clang::clangd::IndexFileOut Out(Data);
   Out.Format = clang::clangd::Format;
+#if defined(_WIN32)
+  if (clang::clangd::Format == clang::clangd::IndexFileFormat::RIFF) {
+    if (std::error_code EC = llvm::sys::ChangeStdoutToBinary()) {
+      llvm::errs() << "Failed to set stdout to binary mode: " << EC.message()
+                   << "\n";
+      return 1;
+    }
+  }
+#endif
   llvm::outs() << Out;
   return 0;
 }
